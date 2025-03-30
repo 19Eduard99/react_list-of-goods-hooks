@@ -15,62 +15,60 @@ export const goodsFromServer = [
   'Garlic',
 ];
 
+enum SortType {
+  None = 'NONE',
+  Alphabetical = 'ALPHABETICAL',
+  Length = 'LENGTH',
+}
+
 interface Values {
   items: string[];
+  sortType: SortType;
   isReverse: boolean;
-  sortByLength: boolean;
-  sortByAlph: boolean;
-  reset: boolean;
 }
 
 const initialValues: Values = {
-  items: goodsFromServer,
+  items: [...goodsFromServer],
+  sortType: SortType.None,
   isReverse: false,
-  sortByLength: false,
-  sortByAlph: false,
-  reset: false,
 };
 
 export const App: React.FC = () => {
   const [foodItems, setFoodItems] = useState(initialValues);
 
-  const sortByLength = (isReverse: boolean) => () => {
+  const handleSortByLength = () => {
     const localItems = [...foodItems.items];
 
     const sortedItems = localItems.sort((a, b) => {
-      return isReverse ? b.length - a.length : a.length - b.length;
+      return foodItems.isReverse ? b.length - a.length : a.length - b.length;
     });
 
     setFoodItems(prev => {
       return {
         ...prev,
         items: sortedItems,
-        sortByLength: true,
-        sortByAlph: false,
-        reset: true,
+        sortType: SortType.Length,
       };
     });
   };
 
-  const sortByAlph = (isReverse: boolean) => () => {
+  const handleSortByAlph = () => {
     const localItems = [...foodItems.items];
 
     const sortedItems = localItems.sort((a, b) => {
-      return isReverse ? b.localeCompare(a) : a.localeCompare(b);
+      return foodItems.isReverse ? b.localeCompare(a) : a.localeCompare(b);
     });
 
     setFoodItems(prev => {
       return {
         ...prev,
         items: sortedItems,
-        sortByLength: false,
-        sortByAlph: true,
-        reset: true,
+        sortType: SortType.Alphabetical,
       };
     });
   };
 
-  const reverse = () => {
+  const handleReverse = () => {
     setFoodItems(prev => {
       const newItems = [...prev.items].reverse();
       const isInitial = newItems.join() === goodsFromServer.join();
@@ -79,47 +77,57 @@ export const App: React.FC = () => {
         ...prev,
         items: newItems,
         isReverse: !prev.isReverse,
-        reset: !isInitial,
+        sortType: isInitial ? SortType.None : prev.sortType,
       };
     });
   };
 
-  const reset = () => {
-    setFoodItems(() => ({ ...initialValues }));
+  const handleReset = () => {
+    setFoodItems({ ...initialValues });
   };
 
   return (
     <div className="section content">
       <div className="buttons">
         <button
-          onClick={sortByAlph(foodItems.isReverse)}
+          onClick={handleSortByAlph}
           type="button"
-          className={`button ${foodItems.sortByAlph ? 'is-info' : 'is-light'}`}
+          className={`button ${
+            foodItems.sortType === SortType.Alphabetical
+              ? 'is-info'
+              : 'is-light'
+          }`}
         >
           Sort alphabetically
         </button>
 
         <button
-          onClick={sortByLength(foodItems.isReverse)}
+          onClick={handleSortByLength}
           type="button"
-          className={`button ${foodItems.sortByLength ? 'is-success' : 'is-light'}`}
+          className={`button ${
+            foodItems.sortType === SortType.Length ? 'is-success' : 'is-light'
+          }`}
         >
           Sort by length
         </button>
 
         <button
-          onClick={reverse}
+          onClick={handleReverse}
           type="button"
           className={`button ${foodItems.isReverse ? 'is-warning' : 'is-light'}`}
         >
           Reverse
         </button>
 
-        {foodItems.reset && (
-          <button onClick={reset} type="button" className="button is-danger">
+        {foodItems.sortType !== SortType.None || foodItems.isReverse ? (
+          <button
+            onClick={handleReset}
+            type="button"
+            className="button is-danger"
+          >
             Reset
           </button>
-        )}
+        ) : null}
       </div>
 
       <ul>
